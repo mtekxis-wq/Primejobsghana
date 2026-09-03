@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PrimeJobs Ghana - Find Free Job Opportunities in Ghana</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --primary: #008559; /* Ghana Green */
@@ -197,6 +198,12 @@
             color: white;
         }
 
+        .loading-text, .no-jobs {
+            text-align: center;
+            color: var(--gray);
+            padding: 2rem;
+        }
+
         /* Sidebar & Ad Space */
         .sidebar {
             display: flex;
@@ -239,49 +246,18 @@
         <h1>Find Your Next Career in Ghana</h1>
         <p>100% Free Job Board. Connecting Ghanaian Talent with Top Employers.</p>
         <div class="search-box">
-            <input type="text" placeholder="Job title, keywords, or company...">
-            <input type="text" placeholder="City or Region (e.g., Accra, Kumasi)">
-            <button>Search Jobs</button>
+            <input type="text" id="searchInput" placeholder="Job title, keywords, or company...">
+            <input type="text" id="locationInput" placeholder="City or Region (e.g., Accra, Kumasi)">
+            <button onclick="fetchJobs()">Search Jobs</button>
         </div>
     </section>
 
     <div class="container">
         <div class="job-list">
             <h2>Latest Openings</h2>
-
-            <div class="job-card">
-                <a href="#" class="job-title">Customer Support Representative</a>
-                <div class="job-company">MTN Ghana • Accra</div>
-                <div class="job-details">
-                    <span>📍 Accra, Greater Accra</span>
-                    <span>🕒 Full-time</span>
-                    <span>💰 Competitive</span>
-                </div>
-                <a href="#" class="apply-btn">Apply Now</a>
+            <div id="jobsContainer">
+                <p class="loading-text">Loading live jobs from database...</p>
             </div>
-
-            <div class="job-card">
-                <a href="#" class="job-title">Junior Software Developer (Python/JS)</a>
-                <div class="job-company">Zeepay • Accra / Remote</div>
-                <div class="job-details">
-                    <span>📍 Remote / Hybrid</span>
-                    <span>🕒 Full-time</span>
-                    <span>💰 Negotiable</span>
-                </div>
-                <a href="#" class="apply-btn">Apply Now</a>
-            </div>
-
-            <div class="job-card">
-                <a href="#" class="job-title">Branch Accountant</a>
-                <div class="job-company">Ecobank Ghana • Kumasi</div>
-                <div class="job-details">
-                    <span>📍 Kumasi, Ashanti Region</span>
-                    <span>🕒 Full-time</span>
-                    <span>💰 Standard</span>
-                </div>
-                <a href="#" class="apply-btn">Apply Now</a>
-            </div>
-
         </div>
 
         <div class="sidebar">
@@ -300,5 +276,63 @@
         <p>&copy; 2026 PrimeJobs Ghana. Built to empower Ghanaian job seekers.</p>
     </footer>
 
+    <script>
+        // Replace with your actual publishable key if different
+        const supabaseUrl = 'https://lnrmnmhmwxrsfkaljaw.supabase.co';
+        const supabaseKey = 'sb_publishable_pt2sPBHe4xW9EroHd14QnA_SHyfg...'; 
+        
+        const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+        async function fetchJobs() {
+            const container = document.getElementById('jobsContainer');
+            container.innerHTML = '<p class="loading-text">Searching jobs...</p>';
+
+            const searchKeyword = document.getElementById('searchInput').value.trim();
+            const searchLocation = document.getElementById('locationInput').value.trim();
+
+            let query = _supabase.from('jobs').select('*').order('created_at', { ascending: false });
+
+            if (searchKeyword) {
+                query = query.or(`title.ilike.%${searchKeyword}%,company.ilike.%${searchKeyword}%`);
+            }
+            if (searchLocation) {
+                query = query.ilike('location', `%${searchLocation}%`);
+            }
+
+            const { data, error } = await query;
+
+            if (error) {
+                console.error('Error fetching jobs:', error);
+                container.innerHTML = '<p class="no-jobs">Could not load jobs at the moment. Please try again later.</p>';
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                container.innerHTML = '<p class="no-jobs">No job listings found matching your search. Check back soon!</p>';
+                return;
+            }
+
+            container.innerHTML = '';
+            data.forEach(job => {
+                const card = document.createElement('div');
+                card.className = 'job-card';
+                card.innerHTML = `
+                    <a href="${job.apply_url || '#'}" target="_blank" class="job-title">${job.title}</a>
+                    <div class="job-company">${job.company} • ${job.location}</div>
+                    <div class="job-details">
+                        <span>📍 ${job.location}</span>
+                        <span>🕒 ${job.job_type || 'Full-time'}</span>
+                        <span>💰 ${job.salary || 'Competitive'}</span>
+                    </div>
+                    <p style="font-size: 0.9rem; color: #444; margin-bottom: 1rem;">${job.description || ''}</p>
+                    <a href="${job.apply_url || '#'}" target="_blank" class="apply-btn">Apply Now</a>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Load jobs automatically when the page opens
+        fetchJobs();
+    </script>
 </body>
 </html>
