@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post a Job - PrimeJobs Ghana</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --primary: #008559;
+            --dark: #222222;
+            --light: #f9f9f9;
+            --border: #e0e0e0;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--light); color: var(--dark); line-height: 1.6; }
+        header { background: #ffffff; border-bottom: 1px solid var(--border); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.5rem; font-weight: bold; color: var(--primary); text-decoration: none; }
+        .logo span { color: var(--dark); }
+        .container { max-width: 600px; margin: 2rem auto; background: white; padding: 2rem; border-radius: 8px; border: 1px solid var(--border); }
+        h1 { margin-bottom: 1.5rem; color: var(--primary); font-size: 1.8rem; }
+        .form-group { margin-bottom: 1.2rem; }
+        label { display: block; font-weight: 600; margin-bottom: 0.4rem; font-size: 0.9rem; }
+        input, select, textarea { width: 100%; padding: 0.8rem; border: 1px solid var(--border); border-radius: 4px; font-size: 1rem; outline: none; }
+        input:focus, select:focus, textarea:focus { border-color: var(--primary); }
+        textarea { resize: vertical; height: 120px; }
+        button { background-color: var(--primary); color: white; border: none; width: 100%; padding: 0.9rem; font-size: 1rem; font-weight: bold; border-radius: 4px; cursor: pointer; margin-top: 1rem; }
+        button:hover { opacity: 0.9; }
+        .message { margin-top: 1rem; text-align: center; font-weight: 600; }
+        .back-link { display: inline-block; margin-bottom: 1rem; text-decoration: none; color: var(--primary); font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="index.html" class="logo">Prime<span>Jobs</span>GH</a>
+        <a href="index.html" class="back-link" style="margin:0;">&larr; Back to Home</a>
+    </header>
+
+    <div class="container">
+        <h1>Post a Job for Free</h1>
+        <form id="jobForm" onsubmit="postJob(event)">
+            <div class="form-group">
+                <label for="title">Job Title *</label>
+                <input type="text" id="title" required placeholder="e.g. Accountant, Customer Service">
+            </div>
+            <div class="form-group">
+                <label for="company">Company Name *</label>
+                <input type="text" id="company" required placeholder="e.g. MTN Ghana">
+            </div>
+            <div class="form-group">
+                <label for="location">Location / Region *</label>
+                <input type="text" id="location" required placeholder="e.g. Accra, Kumasi, Remote">
+            </div>
+            <div class="form-group">
+                <label for="job_type">Job Type *</label>
+                <select id="job_type" required>
+                    <option value="Full-time">Full-time</option>
+                    <option value="Part-time">Part-time</option>
+                    <option value="Contract">Contract</option>
+                    <option value="Remote">Remote</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="salary">Salary (Optional)</label>
+                <input type="text" id="salary" placeholder="e.g. GHS 2,500 - 3,500 or Competitive">
+            </div>
+            <div class="form-group">
+                <label for="apply_url">Application Link or Email *</label>
+                <input type="text" id="apply_url" required placeholder="https://company.com/apply or HR@email.com">
+            </div>
+            <div class="form-group">
+                <label for="description">Job Description *</label>
+                <textarea id="description" required placeholder="Outline responsibilities and qualifications..."></textarea>
+            </div>
+            <button type="submit" id="submitBtn">Publish Job Listing</button>
+            <p id="responseMsg" class="message"></p>
+        </form>
+    </div>
+
+    <script>
+        const supabaseUrl = 'https://lnrmnmhmwxrsfkaljaw.supabase.co';
+        const supabaseKey = 'sb_publishable_pt2sPBHe4xW9EroHd14QnA_SHyfg...';
+        const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+        async function postJob(event) {
+            event.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            const msg = document.getElementById('responseMsg');
+            
+            btn.disabled = true;
+            btn.textContent = 'Publishing...';
+            msg.textContent = '';
+
+            const newJob = {
+                title: document.getElementById('title').value.trim(),
+                company: document.getElementById('company').value.trim(),
+                location: document.getElementById('location').value.trim(),
+                job_type: document.getElementById('job_type').value,
+                salary: document.getElementById('salary').value.trim(),
+                apply_url: document.getElementById('apply_url').value.trim(),
+                description: document.getElementById('description').value.trim()
+            };
+
+            const { error } = await _supabase.from('jobs').insert([newJob]);
+
+            if (error) {
+                console.error(error);
+                msg.style.color = 'red';
+                msg.textContent = 'Error publishing job. Please check fields and try again.';
+                btn.disabled = false;
+                btn.textContent = 'Publish Job Listing';
+                return;
+            }
+
+            msg.style.color = '#008559';
+            msg.textContent = 'Job published successfully! Redirecting...';
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
